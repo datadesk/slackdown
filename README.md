@@ -31,3 +31,8 @@ Convert a Slack message to HTML
 >>> slackdown.render('*Bold*')
 '<b>Bold</b>'
 ```
+
+```python
+>>> slackdown.render('_italics_')
+'<i>italics</i>'
+```
