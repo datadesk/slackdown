@@ -17,7 +17,7 @@ A simple [Slack message text formatting](https://get.slack.help/hc/en-us/article
 pip install slackdown
 ```
 
-## Basic usage
+### Basic usage
 
 Importing the library
 
