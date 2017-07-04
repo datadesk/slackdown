@@ -1,4 +1,45 @@
 import re
+from HTMLParser import HTMLParser
+
+
+"""
+Slack characters that serve as delimination options.
+"""
+LIST_DELIMITERS = {
+    '\-': 'dash',
+    u'\u2022': 'dot',
+    '\d*\.': 'numbered',
+}
+
+"""
+Slack characters that serve as formatting options.
+"""
+FORMATTERS = {
+    '*': 'b',
+    '_': 'i',
+    '~': 's',
+    '`': 'code',
+}
+
+"""
+List types outputed by slackdown.render().
+"""
+LIST_TYPES = {
+    'dot': 'ul',
+    'dash': 'ul',
+    'numbered': 'ol',
+}
+
+"""
+Predefined elements that serve as "parents".
+"""
+PARENT_ELEMENTS = [
+    'p',
+    'pre',
+    'ul',
+    'ol',
+    'blockquote'
+]
 
 
 def render(txt):
@@ -6,83 +47,232 @@ def render(txt):
     Accepts Slack formatted text and returns HTML.
     """
     # handle ordered and unordered lists
-    lists = {
-        '\-': 'ul',
-        u'\u2022': 'ul',
-        '\d*\.': 'ol',
-    }
-    for html_list in lists:
-        slack_tag = html_list
-        html_tag = lists[html_list]
+    for delimeter in LIST_DELIMITERS:
+        slack_tag = delimeter
+        class_name = LIST_DELIMITERS[delimeter]
 
         # Wrap any lines that start with the slack_tag in <li></li>
         list_regex = u'(?:^|\n){}\s?(.*)'.format(slack_tag)
-        list_repl = r'<li>\g<1></li>'
+        list_repl = r'<li class="list-item-{}">\g<1></li>'.format(class_name)
         txt = re.sub(list_regex, list_repl, txt)
 
-        # Wrap any <li></li> groups not already wrapped in html_tag
-        """
-        List Wrapping Regex
-        r'(?<!(?<=<[u|o]l>)|(?<=</li>\n)|(?<=</li>))(<li>.+?</li>)\n?(?!\n?<li>)'
-
-        - Match any group of <li> elements that aren't wrapped in <ol></ol> or <ul></ul> tags.
-
-        - The capture group is located in the middle: (<li>.+?</li>)
-           which means grab (non-greedy) any set of characters inside and including <li></li> tags.
-
-        - The capture group cannot be proceeded by a <ul>,<ol>,or</li>.
-          -- If it's proceeded by a <ul> or <ol>, then it's already wrapped.
-          -- If it's proceeded by an </li>, then it's not the first item in the list.
-          To do this it includes a negative lookbehind (?<!...) which disqualifies those prefixes.
-          Inside that negative lookbehind is three possible positive lookbehinds.
-          Those three possible options (separated by pipe) are:
-          -- (?<=<[u|o]l>): a <ul> or <ol>
-          -- (?<=</li>\n): an </li> followed by a line break
-          -- (?<=</li>): an </li> (note that lookbehinds must be a fixed length so (?<=</li>\n?) wouldn't work.)
-           Here's a traditional boolean logic to regex translation:
-           !(   (starts_with_ol|starts_with_ul) | (starts_with_li_break) | (starts_with_li)   )
-           (?<!          (?<=<[u|o]l>)          |      (?<=</li>\n)      |    (?<=</li>)      )
-
-        - The capture group should end with an </li> that is not immediately followed by an <li>
-          (with the optional addition of a single line break between them).
-          This signifies the end of the list. For this I used a negative lookahead (?!...)
-          with a single optional \n and an <li>.
-
-        - There's also an extra optional single space \n? after the capture group. That's there to remove the line
-          break at the end of the list.
-        """
-        unwwrapped_lists_regex = r'(?<!(?<=<[u|o]l>)|(?<=</li>\n)|(?<=</li>))(<li>.+?</li>)\n?(?!\n?<li>)'
-        wrapper_string_repl = r'<{t}>\g<1></{t}>'.format(t=html_tag)
-        txt = re.sub(unwwrapped_lists_regex, wrapper_string_repl, txt)
-
     # hanlde blockquotes
-    txt = re.sub(u'(?:^|\n)(?:&gt;){3}\s?(.*)$', r'<blockquote>\1</blockquote>', txt, flags=re.DOTALL)
-    txt = re.sub(u'(?:^|\n)&gt;\s?(.*)\n?', r'<blockquote>\1</blockquote>', txt)
+    txt = re.sub(u'(?:^|\n)(?:&gt;){3}\s?(.*)$', r'<blockquote>\g<1></blockquote>', txt, flags=re.DOTALL)
+    txt = re.sub(u'(?:^|\n)&gt;\s?(.*)\n?', r'<blockquote>\g<1></blockquote>', txt)
 
     # handle code blocks
     txt = re.sub(r'```\n?(.*)```', r'<pre>\g<1></pre>', txt, flags=re.DOTALL)
     txt = re.sub(r'\n(</pre>)', r'\g<1>', txt)
 
     # handle bolding, italics, and strikethrough
-    wrappers = {
-        '*': 'b',
-        '_': 'i',
-        '~': 's',
-        '`': 'code',
-    }
-    for wrapper in wrappers:
+    for wrapper in FORMATTERS:
         slack_tag = wrapper
-        html_tag = wrappers[wrapper]
+        html_tag = FORMATTERS[wrapper]
 
-        regex_string = '\{t}([^\{t}]*)\{t}'.format(t=slack_tag)
-        regex = re.compile(regex_string, flags=re.DOTALL)
+        # Grab all text in formatted characters on the same line unless escaped
+        regex = r'(?<!\\)\{t}([^\{t}|\n]*)\{t}'.format(t=slack_tag)
         repl = r'<{t}>\g<1></{t}>'.format(t=html_tag)
         txt = re.sub(regex, repl, txt)
-
-    # convert multiple spaces
-    txt = txt.replace(r'  ', ' &nbsp')
 
     # convert line breaks
     txt = txt.replace('\n', '<br />')
 
+    # clean up bad HTML
+    parser = CustomSlackdownParser(txt)
+    txt = parser.clean()
+
+    # convert multiple spaces
+    txt = txt.replace(r'  ', ' &nbsp')
+
     return txt
+
+
+class CustomSlackdownParser(HTMLParser):
+    """
+    Custom HTML parser for cleaning up the slackdown HTML output.
+    """
+    def __init__(self, txt):
+        """
+        Initialize custom parser properties.
+        """
+        self.dirty_html = txt
+        self.cleaned_html = ''
+        self.current_parent_element = {}
+        self.current_parent_element['tag'] = ''
+        self.current_parent_element['attrs'] = {}
+        self.parsing_li = False
+
+        HTMLParser.__init__(self)
+
+    def _open_list(self, list_type):
+        """
+        Add an open list tag corresponding to the specification in the
+        parser's LIST_TYPES.
+        """
+        if list_type in LIST_TYPES.keys():
+            tag = LIST_TYPES[list_type]
+        else:
+            raise Exception('CustomSlackdownParser:_open_list: Not a valid list type.')
+
+        html = '<{t} class="list-container-{c}">'.format(
+            t=tag,
+            c=list_type
+        )
+        self.cleaned_html += html
+        self.current_parent_element['tag'] = LIST_TYPES[list_type]
+        self.current_parent_element['attrs'] = {'class': list_type}
+
+    def _close_list(self):
+        """
+        Add an close list tag corresponding to the currently open
+        list found in current_parent_element.
+        """
+        list_type = self.current_parent_element['attrs']['class']
+        tag = LIST_TYPES[list_type]
+
+        html = '</{t}>'.format(
+            t=tag
+        )
+        self.cleaned_html += html
+        self.current_parent_element['tag'] = ''
+        self.current_parent_element['attrs'] = {}
+
+    def handle_starttag(self, tag, attrs):
+        """
+        Called by HTMLParser.feed when a start tag is found.
+        """
+        # Parse the tag attributes
+        attrs_dict = dict(t for t in attrs)
+
+        # If the tag is a predefined parent element
+        if tag in PARENT_ELEMENTS:
+            # If parser is parsing another parent element
+            if self.current_parent_element['tag'] != '':
+                # close the parent element
+                self.cleaned_html += '</{}>'.format(self.current_parent_element['tag'])
+
+            self.current_parent_element['tag'] = tag
+            self.current_parent_element['attrs'] = {}
+
+            self.cleaned_html += '<{}>'.format(tag)
+
+        # If the tag is a list item
+        elif tag == 'li':
+            self.parsing_li = True
+
+            # Parse the class name & subsequent type
+            class_name = attrs_dict['class']
+            list_type = class_name[10:]
+
+            # Check if parsing a list
+            if self.current_parent_element['tag'] == 'ul' or self.current_parent_element['tag'] == 'ol':
+                cur_list_type = self.current_parent_element['attrs']['class']
+                # Parsing a different list
+                if cur_list_type != list_type:
+                    # Close that list
+                    self._close_list()
+
+                    # Open new list
+                    self._open_list(list_type)
+            # Not parsing a list
+            else:
+                # if parsing some other parent
+                if self.current_parent_element['tag'] != '':
+                    self.cleaned_html += '</{}>'.format(self.current_parent_element['tag'])
+                # Open new list
+                self._open_list(list_type)
+
+            self.cleaned_html += '<{}>'.format(tag)
+
+        # If the tag is a line break
+        elif tag == 'br':
+            # If parsing a paragraph, close it
+            if self.current_parent_element['tag'] == 'p':
+                self.cleaned_html += '</p>'
+                self.current_parent_element['tag'] = ''
+                self.current_parent_element['attrs'] = {}
+            # If parsing a list, close it
+            elif self.current_parent_element['tag'] == 'ul' or self.current_parent_element['tag'] == 'ol':
+                self._close_list()
+            # If parsing any other parent element, keep it
+            elif self.current_parent_element['tag'] in PARENT_ELEMENTS:
+                self.cleaned_html += '<br />'
+            # If not in any parent element, create an empty paragraph
+            else:
+                self.cleaned_html += '<p></p>'
+
+        # If the tag is something else, like a <b> or <i> tag
+        else:
+            # If not parsing any parent element
+            if self.current_parent_element['tag'] == '':
+                self.cleaned_html += '<p>'
+                self.current_parent_element['tag'] = 'p'
+            self.cleaned_html += '<{}>'.format(tag)
+
+    def handle_endtag(self, tag):
+        """
+        Called by HTMLParser.feed when an end tag is found.
+        """
+        if tag in PARENT_ELEMENTS:
+            self.current_parent_element['tag'] = ''
+            self.current_parent_element['attrs'] = ''
+
+        if tag == 'li':
+            self.parsing_li = True
+        if tag != 'br':
+            self.cleaned_html += '</{}>'.format(tag)
+
+    def handle_data(self, data):
+        """
+        Called by HTMLParser.feed when text is found.
+        """
+        if self.current_parent_element['tag'] == '':
+            self.cleaned_html += '<p>'
+            self.current_parent_element['tag'] = 'p'
+
+        self.cleaned_html += data
+
+    def _remove_pre_formatting(self):
+        """
+        Removes formatting tags added to pre elements.
+        """
+        preformatted_wrappers = [
+            'pre',
+            'code'
+        ]
+
+        for wrapper in preformatted_wrappers:
+            for formatter in FORMATTERS:
+                tag = FORMATTERS[formatter]
+                character = formatter
+
+                regex = r'(<{w}>.*)<{t}>(.*)</{t}>(.*</{w}>)'.format(
+                    t=tag,
+                    w=wrapper
+                )
+                repl = r'\g<1>{c}\g<2>{c}\g<3>'.format(c=character)
+                self.cleaned_html = re.sub(regex, repl, self.cleaned_html)
+
+    def feed(self):
+        """
+        Uses the dirty_html property as the argument for HTMLParser.feed
+        """
+        HTMLParser.feed(self, self.dirty_html)
+
+    def clean(self):
+        """
+        Goes through the txt input and cleans up any problematic HTML.
+        """
+        # Calls handle_starttag, handle_endtag, and handle_data
+        self.feed()
+
+        # Clean up any parent tags left open
+        if self.current_parent_element['tag'] != '':
+            self.cleaned_html += '</{}>'.format(self.current_parent_element['tag'])
+
+        # Remove empty <p> added after lists
+        self.cleaned_html = re.sub(r'(</[u|o]l>)<p></p>', r'\g<1>', self.cleaned_html)
+
+        self._remove_pre_formatting()
+
+        return self.cleaned_html
