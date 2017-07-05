@@ -1,8 +1,10 @@
 import re
 try:
-    from HTMLParser import HTMLParser # Python 2 module
+    # Python 2 module
+    from HTMLParser import HTMLParser
 except ImportError:
-    from html.parser import HTMLParser # Python 3 module
+    # Python 3 module
+    from html.parser import HTMLParser
 
 
 """
