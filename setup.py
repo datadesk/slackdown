@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='slackdown',
-    version='0.0.1',
+    version='0.0.2',
     description='A simple Slack message text formatting to HTML code converter.',
     author='Andrew Briz',
     author_email='briz.andrew@gmail.com',
