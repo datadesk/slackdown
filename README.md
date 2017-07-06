@@ -19,7 +19,7 @@ pip install slackdown
 
 ### Basic usage
 
-Importing the library.
+Import the library.
 
 ```python
 import slackdown
@@ -29,13 +29,15 @@ Convert a Slack message to HTML using the render function.
 
 ```python
 >>> slackdown.render('*bold*')
-'<b>bold</b>'
+'<p><b>bold</b></p>'
 ```
 
 ```python
 >>> slackdown.render('_italics_')
-'<i>italics</i>'
+'<p><i>italics</i></p>'
 ```
+
+All inline elements will be rendered inside `<p>` tags unless they are already wrapped in another block element like `<pre>`,`<blockquote>`,`<ul>`, or `<ol>` tags.
 
 ### Features
 slackdown includes multiple features of Slack messages including all the one's highlighted in Slack's [message formatting documentation](https://get.slack.help/hc/en-us/articles/202288908-Format-your-messages).
@@ -51,7 +53,7 @@ slackdown includes multiple features of Slack messages including all the one's h
 - Lines of text that begin with a bullet(`•`), hyphen(`-`), or digit followed by a period(`1.`) will be rendered inside `<li>` tags.
 - Bulleted and hyphened lists are rendered inside `<ul>` tags.
 - Numbered lists are rendered inside `<ol>` tags.
--- Note that the numbers used in the original text will be ignored and they will instead be rendered using your CSS list style.
+    - _Note that the numbers used in the original text will be ignored and they will instead be rendered using your CSS list style._
 - To include multiple lists add an extra line break between them. This line break will not be rendered in the final HTML.
 ```
 - item 1
@@ -75,7 +77,6 @@ is rendered as
    <li>item 3</li>
 </ol>
 ```
-_Note: there is a known bug where mixing two different kinds of list delimitation in a single list causes unintended wrapping. See [this issue](issues/10) for updates._
 
 #### [Blockquotes](https://get.slack.help/hc/en-us/articles/202288908-Format-your-messages#blockquotes)
 - Lines of text that start with a `&gt;`s are rendered inside `<blockquote>` tags.
@@ -102,7 +103,30 @@ is rendered as
 - Text surrounded by \`\`\`three backticks\`\`\` will be rendered inside `<pre>` tags.
 
 ####  Line Breaks
-- Line breaks inside of text will be rendered as `<br />` tags
+- Line breaks rendered inside `<p>` tags will close the tag and start a new paragraph. Line breaks in other block elements will be rendered as `<br />` tags.
+```
+Multiple
+lines of
+paragraph text
+
+` ` `
+Multiple
+lines of
+pre text
+` ` `
+```
+is rendered as
+```
+<p>Multiple</p>
+<p>lines of</p>
+<p>paragraph text</p>
+<p></p>
+<pre>
+Multiple <br />
+lines of <br />
+pre text
+</pre>
+```
 
 ####  Spaces
 - Since extra whitespace is stripped in HTML, any extra space is rendered using &nbsp. Every two space characters are rendered as a space character and a &nbsp. This minimizes added characters while keeping the same amount of rendered whitespace as the original text.
