@@ -47,7 +47,7 @@ slackdown includes multiple features of Slack messages including all the one's h
 - Text surrounded by \*asterisks\* will be rendered inside `<b>` tags.
 
 #### [Strikethrough](https://get.slack.help/hc/en-us/articles/202288908-Format-your-messages#strikethrough)
-- Text surrounded by ~tildes~ will be rendered inside `<s>` tags.
+- Text surrounded by \~tildes\~ will be rendered inside `<s>` tags.
 
 #### [Lists](https://get.slack.help/hc/en-us/articles/202288908-Format-your-messages#lists)
 - Lines of text that begin with a bullet(`•`), hyphen(`-`), or digit followed by a period(`1.`) will be rendered inside `<li>` tags.
