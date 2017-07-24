@@ -47,6 +47,15 @@ PARENT_ELEMENTS = [
 ]
 
 
+def parse(message):
+    """
+    Accepts a Slack message object and returns HTML.
+    """
+    html = render(message['text'])
+
+    return html
+
+
 def render(txt):
     """
     Accepts Slack formatted text and returns HTML.
@@ -83,7 +92,7 @@ def render(txt):
     txt = txt.replace('\n', '<br />')
 
     # clean up bad HTML
-    parser = CustomSlackdownParser(txt)
+    parser = CustomSlackdownHTMLParser(txt)
     txt = parser.clean()
 
     # convert multiple spaces
@@ -92,7 +101,7 @@ def render(txt):
     return txt
 
 
-class CustomSlackdownParser(HTMLParser):
+class CustomSlackdownHTMLParser(HTMLParser):
     """
     Custom HTML parser for cleaning up the slackdown HTML output.
     """
