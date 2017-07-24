@@ -58,7 +58,7 @@ class SlackdownTest(unittest.TestCase):
 
     def test_multiple_same_lists(self):
         txt = slackdown.render('- item 1\n- item 2\n\n- item 3\n- item 4')
-        self.assertEqual(txt, '''\
+        self.assertEqual(txt, '\
 <ul class="list-container-dash">\
 <li>item 1</li>\
 <li>item 2</li>\
@@ -67,11 +67,12 @@ class SlackdownTest(unittest.TestCase):
 <li>item 3</li>\
 <li>item 4</li>\
 </ul>\
-''')
+')
 
     def test_multiple_diff_lists(self):
         txt = slackdown.render('These are *two* lists.\n- item 1\n- item 2\n1. item 3\n2. item 4\nRight?')
-        self.assertEqual(txt, '''\
+        self.maxDiff = None
+        self.assertEqual(txt, '\
 <p>These are <b>two</b> lists.</p>\
 <ul class="list-container-dash">\
 <li>item 1</li>\
@@ -82,7 +83,7 @@ class SlackdownTest(unittest.TestCase):
 <li>item 4</li>\
 </ol>\
 <p>Right?</p>\
-''')
+')
 
     def test_multiple_parents(self):
         txt = slackdown.render('A blockquote looks like this:\n&gt; Someone else said this.')
