@@ -126,7 +126,7 @@ class CustomSlackdownHTMLParser(HTMLParser):
         if list_type in LIST_TYPES.keys():
             tag = LIST_TYPES[list_type]
         else:
-            raise Exception('CustomSlackdownParser:_open_list: Not a valid list type.')
+            raise Exception('CustomSlackdownHTMLParser:_open_list: Not a valid list type.')
 
         html = '<{t} class="list-container-{c}">'.format(
             t=tag,

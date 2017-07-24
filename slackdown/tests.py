@@ -108,8 +108,8 @@ class SlackdownTest(unittest.TestCase):
 class CustomSlackdownParserTest(unittest.TestCase):
     def test_bad_open_list(self):
         bad_txt = '<li class="list-container-bad_type"></li>'
-        error_msg = 'CustomSlackdownParser:_open_list: Not a valid list type.'
-        parser = slackdown.CustomSlackdownParser(bad_txt)
+        error_msg = 'CustomSlackdownHTMLParser:_open_list: Not a valid list type.'
+        parser = slackdown.CustomSlackdownHTMLParser(bad_txt)
 
         with self.assertRaises(Exception) as context:
             parser.clean()
