@@ -71,7 +71,7 @@ def render(txt):
         txt = re.sub(list_regex, list_repl, txt)
 
     # hanlde blockquotes
-    txt = re.sub(u'(?:^|\n)(?:&gt;){3}\s?(.*)$', r'<blockquote>\g<1></blockquote>', txt, flags=re.DOTALL)
+    txt = re.sub(u'(^|\n)(?:&gt;){3}\s?(.*)$', r'\g<1><blockquote>\g<2></blockquote>', txt, flags=re.DOTALL)
     txt = re.sub(u'(?:^|\n)&gt;\s?(.*)\n?', r'<blockquote>\g<1></blockquote>', txt)
 
     # handle code blocks

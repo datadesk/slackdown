@@ -56,6 +56,11 @@ class SlackdownTest(unittest.TestCase):
         txt = slackdown.render('&gt;&gt;&gt; Someone else\nsaid this.')
         self.assertEqual(txt, '<blockquote>Someone else<br />said this.</blockquote>')
 
+    def test_multiple_blockquotes(self):
+        txt = slackdown.render('&gt; A couple of\n&gt;&gt;&gt; Blockquotes until\nthe end of the message.')
+        self.assertEqual(txt, '\
+<blockquote>A couple of</blockquote><blockquote>Blockquotes until<br />the end of the message.</blockquote>')
+
     def test_multiple_same_lists(self):
         txt = slackdown.render('- item 1\n- item 2\n\n- item 3\n- item 4')
         self.assertEqual(txt, '\
