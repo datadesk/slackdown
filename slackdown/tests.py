@@ -110,6 +110,12 @@ class SlackdownTest(unittest.TestCase):
         txt = slackdown.render('The \*unbolded\* text should not be *bold*.')
         self.assertEqual(txt, '<p>The \*unbolded\* text should not be <b>bold</b>.</p>')
 
+    def test_hyperlinks(self):
+        txt = slackdown.render('This is a tweet <https://example.com>.')
+        self.assertEqual(txt, '\
+<p>This is a tweet <a href="https://example.com" target="blank">https://example.com</a>.</p>\
+')
+
 
 class CustomSlackdownParserTest(unittest.TestCase):
     def test_bad_open_list(self):

@@ -102,6 +102,9 @@ is rendered as
 - Text surrounded in \`backticks\` will be rendered inside `<code>` tags.
 - Text surrounded by \`\`\`three backticks\`\`\` will be rendered inside `<pre>` tags.
 
+#### Hyperlinks
+- Text surrounded by < angle brackets > will be rendered inside `<a>` tags with `target="blank"` and their contents as the `href`.
+
 ####  Line Breaks
 - Line breaks rendered inside `<p>` tags will close the tag and start a new paragraph. Line breaks in other block elements will be rendered as `<br />` tags.
 ```

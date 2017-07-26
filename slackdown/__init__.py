@@ -60,6 +60,10 @@ def render(txt):
     """
     Accepts Slack formatted text and returns HTML.
     """
+
+    # handle hyperlinks
+    txt = re.sub(r'<(.*)>', r'<a href="\g<1>" target="blank">\g<1></a>', txt)
+
     # handle ordered and unordered lists
     for delimeter in LIST_DELIMITERS:
         slack_tag = delimeter
@@ -221,7 +225,15 @@ class CustomSlackdownHTMLParser(HTMLParser):
             if self.current_parent_element['tag'] == '':
                 self.cleaned_html += '<p>'
                 self.current_parent_element['tag'] = 'p'
-            self.cleaned_html += '<{}>'.format(tag)
+            self.cleaned_html += '<{}'.format(tag)
+
+            for attr in attrs_dict.keys():
+                self.cleaned_html += ' {k}="{v}"'.format(
+                    k=attr,
+                    v=attrs_dict[attr]
+                )
+
+            self.cleaned_html += '>'
 
     def handle_endtag(self, tag):
         """
