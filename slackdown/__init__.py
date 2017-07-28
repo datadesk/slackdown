@@ -61,8 +61,17 @@ def render(txt):
     Accepts Slack formatted text and returns HTML.
     """
 
-    # handle hyperlinks
-    txt = re.sub(r'<(.*)>', r'<a href="\g<1>" target="blank">\g<1></a>', txt)
+    # Removing links to other channels
+    txt = re.sub(r'<#[^\|]*\|(.*)>', r'#\g<1>', txt)
+
+    # Removing links to other users
+    txt = re.sub(r'<(@.*)>', r'\g<1>', txt)
+
+    # handle named hyperlinks
+    txt = re.sub(r'<([^\|]*)\|([^\|]*)>', r'<a href="\g<1>" target="blank">\g<2></a>', txt)
+
+    # handle unnamed hyperlinks
+    txt = re.sub(r'<([^a]*)>', r'<a href="\g<1>" target="blank">\g<1></a>', txt)
 
     # handle ordered and unordered lists
     for delimeter in LIST_DELIMITERS:
