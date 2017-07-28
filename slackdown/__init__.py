@@ -236,7 +236,7 @@ class CustomSlackdownHTMLParser(HTMLParser):
                 self.current_parent_element['tag'] = 'p'
             self.cleaned_html += '<{}'.format(tag)
 
-            for attr in attrs_dict.keys():
+            for attr in sorted(attrs_dict.keys()):
                 self.cleaned_html += ' {k}="{v}"'.format(
                     k=attr,
                     v=attrs_dict[attr]
