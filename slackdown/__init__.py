@@ -71,7 +71,7 @@ def render(txt):
     txt = re.sub(r'<([^\|]*)\|([^\|]*)>', r'<a href="\g<1>" target="blank">\g<2></a>', txt)
 
     # handle unnamed hyperlinks
-    txt = re.sub(r'<([^a]*)>', r'<a href="\g<1>" target="blank">\g<1></a>', txt)
+    txt = re.sub(r'<([^a|/a].*)>', r'<a href="\g<1>" target="blank">\g<1></a>', txt)
 
     # handle ordered and unordered lists
     for delimeter in LIST_DELIMITERS:

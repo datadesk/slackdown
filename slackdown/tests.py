@@ -127,3 +127,12 @@ class CustomSlackdownParserTest(unittest.TestCase):
             parser.clean()
 
         self.assertTrue(error_msg in str(context.exception))
+
+
+class SlackdownParseTest(unittest.TestCase):
+    def test_parse_render(self):
+        msg = {
+            'text': 'Some *bold* text.'
+        }
+        txt = slackdown.parse(msg)
+        self.assertEqual(txt, '<p>Some <b>bold</b> text.</p>')
